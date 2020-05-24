@@ -6,6 +6,14 @@ import {keys} from "@bokehjs/core/util/object"
 import {difference} from "@bokehjs/core/util/set"
 import {ColumnDataSource, stream_to_column, slice, patch_to_column} from "@bokehjs/models/sources/column_data_source"
 
+import {
+  ndarray,
+  Uint8NDArray, Int8NDArray,
+  Uint16NDArray, Int16NDArray,
+  Uint32NDArray, Int32NDArray,
+  Float32NDArray, Float64NDArray,
+} from "@bokehjs/core/util/ndarray"
+
 import {trap} from "../../../util"
 
 describe("column_data_source module", () => {
@@ -45,40 +53,34 @@ describe("column_data_source module", () => {
     describe("with single integer index", () => {
 
       it("should patch Arrays to Arrays", () => {
-        const a = [1, 2, 3, 4, 5]
-        patch_to_column(a, [[3, 100]], [])
-        expect(a).to.be.instanceof(Array)
+        const a = ndarray([1, 2, 3, 4, 5])
+        patch_to_column(a, [[3, 100]])
         expect(a).to.be.deep.equal([1, 2, 3, 100, 5])
 
-        patch_to_column(a, [[2, 101]], [])
-        expect(a).to.be.instanceof(Array)
+        patch_to_column(a, [[2, 101]])
         expect(a).to.be.deep.equal([1, 2, 101, 100, 5])
       })
 
       it("should patch typed Arrays to typed Arrays", () => {
-        for (const typ of [Float32Array, Float64Array, Int32Array]) {
+        for (const typ of [Float32NDArray, Float64NDArray, Int32NDArray]) {
           const a = new typ([1, 2, 3, 4, 5])
-          patch_to_column(a, [[3, 100]], [])
-          expect(a).to.be.instanceof(typ)
+          patch_to_column(a, [[3, 100]])
           expect(a).to.be.deep.equal(new typ([1, 2, 3, 100, 5]))
 
-          patch_to_column(a, [[2, 101]], [])
-          expect(a).to.be.instanceof(typ)
+          patch_to_column(a, [[2, 101]])
           expect(a).to.be.deep.equal(new typ([1, 2, 101, 100, 5]))
         }
       })
 
       it("should handle multi-part patches", () => {
-        const a = [1, 2, 3, 4, 5]
-        patch_to_column(a, [[3, 100], [0, 10], [4, -1]], [])
-        expect(a).to.be.instanceof(Array)
+        const a = ndarray([1, 2, 3, 4, 5])
+        patch_to_column(a, [[3, 100], [0, 10], [4, -1]])
         expect(a).to.be.deep.equal([10, 2, 3, 100, -1])
       })
 
       it("should return a Set of the patched indices", () => {
-        const a = [1, 2, 3, 4, 5]
-        const s = patch_to_column(a, [[3, 100], [0, 10], [4, -1]], [])
-        expect(s).to.be.instanceof(Set)
+        const a = ndarray([1, 2, 3, 4, 5])
+        const s = patch_to_column(a, [[3, 100], [0, 10], [4, -1]])
         expect(difference(s, new Set([0, 3, 4]))).to.be.deep.equal(new Set())
       })
     })
@@ -86,47 +88,40 @@ describe("column_data_source module", () => {
     describe("with single slice index", () => {
 
       it("should patch Arrays to Arrays", () => {
-        const a = [1, 2, 3, 4, 5]
-        patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]]], [])
-        expect(a).to.be.instanceof(Array)
+        const a = ndarray([1, 2, 3, 4, 5])
+        patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]]])
         expect(a).to.be.deep.equal([1, 2, 100, 101, 5])
 
-        patch_to_column(a, [[{start:1, stop:3, step:1}, [99, 102]]], [])
-        expect(a).to.be.instanceof(Array)
+        patch_to_column(a, [[{start:1, stop:3, step:1}, [99, 102]]])
         expect(a).to.be.deep.equal([1, 99, 102, 101, 5])
       })
 
       it("should patch typed Arrays to typed Arrays", () => {
-        for (const typ of [Float32Array, Float64Array, Int32Array]) {
+        for (const typ of [Float32NDArray, Float64NDArray, Int32NDArray]) {
           const a = new typ([1, 2, 3, 4, 5])
-          patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]]], [])
-          expect(a).to.be.instanceof(typ)
+          patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]]])
           expect(a).to.be.deep.equal(new typ([1, 2, 100, 101, 5]))
 
-          patch_to_column(a, [[{start:1, stop:3, step:1}, [99, 102]]], [])
-          expect(a).to.be.instanceof(typ)
+          patch_to_column(a, [[{start:1, stop:3, step:1}, [99, 102]]])
           expect(a).to.be.deep.equal(new typ([1, 99, 102, 101, 5]))
         }
       })
 
       it("should handle patch indices with strides", () => {
-        const a = new Int32Array([1, 2, 3, 4, 5])
-        patch_to_column(a, [[{start:1, stop:5, step:2}, [100, 101]]], [])
-        expect(a).to.be.instanceof(Int32Array)
+        const a = ndarray([1, 2, 3, 4, 5], {dtype: "int32"})
+        patch_to_column(a, [[{start:1, stop:5, step:2}, [100, 101]]])
         expect(a).to.be.deep.equal(new Int32Array([1, 100, 3, 101, 5]))
       })
 
       it("should handle multi-part patches", () => {
-        const a = [1, 2, 3, 4, 5]
-        patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]], [{stop:1, step:1}, [10]], [4, -1]], [])
-        expect(a).to.be.instanceof(Array)
+        const a = ndarray([1, 2, 3, 4, 5])
+        patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]], [{stop:1, step:1}, [10]], [4, -1]])
         expect(a).to.be.deep.equal([10, 2, 100, 101, -1])
       })
 
       it("should return a Set of the patched indices", () => {
-        const a = [1, 2, 3, 4, 5]
-        const s = patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]], [{stop:1, step:1}, [10]], [4, -1]], [])
-        expect(s).to.be.instanceof(Set)
+        const a = ndarray([1, 2, 3, 4, 5])
+        const s = patch_to_column(a, [[{start:2, stop:4, step:1}, [100, 101]], [{stop:1, step:1}, [10]], [4, -1]])
         expect(difference(s, new Set([0, 2, 3, 4]))).to.be.deep.equal(new Set())
       })
     })
@@ -134,25 +129,19 @@ describe("column_data_source module", () => {
     describe("with multi-index for 1d subarrays", () => {
 
       it("should patch Arrays to Arrays", () => {
-        const a = [1, 2, 3, 4, 5]
-        const b = [10, 20, -1, -2, 0, 10]
-        const c = [1, 2, 3, 4]
+        const a = ndarray([1, 2, 3, 4, 5], {shape: [5]})
+        const b = ndarray([10, 20, -1, -2, 0, 10], {shape: [6]})
+        const c = ndarray([1, 2, 3, 4], {shape: [4]})
         patch_to_column([a, b, c], [
           [[0, {start:2, stop:4, step:1}], [100, 101]],
-        ], [[5], [6], [4]])
-        expect(a).to.be.instanceof(Array)
-        expect(b).to.be.instanceof(Array)
-        expect(c).to.be.instanceof(Array)
+        ])
         expect(a).to.be.deep.equal([1, 2, 100, 101, 5])
         expect(b).to.be.deep.equal([10, 20, -1, -2, 0, 10])
         expect(c).to.be.deep.equal([1, 2, 3, 4])
 
         patch_to_column([a, b, c], [
           [[1, {start:2, stop:4, step:1}], [100, 101]],
-        ], [[5], [6], [4]])
-        expect(a).to.be.instanceof(Array)
-        expect(b).to.be.instanceof(Array)
-        expect(c).to.be.instanceof(Array)
+        ])
         expect(a).to.be.deep.equal([1, 2, 100, 101, 5])
         expect(b).to.be.deep.equal([10, 20, 100, 101, 0, 10])
         expect(c).to.be.deep.equal([1, 2, 3, 4])
@@ -166,9 +155,6 @@ describe("column_data_source module", () => {
           patch_to_column([a, b, c], [
             [[0, {start:2, stop:4, step:1}], [100, 101]],
           ], [[5], [6], [4]])
-          expect(a).to.be.instanceof(typ)
-          expect(b).to.be.instanceof(typ)
-          expect(c).to.be.instanceof(typ)
           expect(a).to.be.deep.equal(new typ([1, 2, 100, 101, 5]))
           expect(b).to.be.deep.equal(new typ([10, 20, -1, -2, 0, 10]))
           expect(c).to.be.deep.equal(new typ([1, 2, 3, 4]))
@@ -176,9 +162,6 @@ describe("column_data_source module", () => {
           patch_to_column([a, b, c], [
             [[1, {start:2, stop:4, step:1}], [100, 101]],
           ], [[5], [6], [4]])
-          expect(a).to.be.instanceof(typ)
-          expect(b).to.be.instanceof(typ)
-          expect(c).to.be.instanceof(typ)
           expect(a).to.be.deep.equal(new typ([1, 2, 100, 101, 5]))
           expect(b).to.be.deep.equal(new typ([10, 20, 100, 101, 0, 10]))
           expect(c).to.be.deep.equal(new typ([1, 2, 3, 4]))
@@ -192,9 +175,6 @@ describe("column_data_source module", () => {
         patch_to_column([a, b, c], [
           [[0, {start:1, stop:5, step:2}], [100, 101]],
         ], [[5], [6], [4]])
-        expect(a).to.be.instanceof(Int32Array)
-        expect(b).to.be.instanceof(Int32Array)
-        expect(c).to.be.instanceof(Int32Array)
         expect(a).to.be.deep.equal(new Int32Array([1, 100, 3, 101, 5]))
         expect(b).to.be.deep.equal(new Int32Array([10, 20, -1, -2, 0, 10]))
         expect(c).to.be.deep.equal(new Int32Array([1, 2, 3, 4]))
@@ -202,9 +182,6 @@ describe("column_data_source module", () => {
         patch_to_column([a, b, c], [
           [[1, {step:3}], [100, 101]],
         ], [[5], [6], [4]])
-        expect(a).to.be.instanceof(Int32Array)
-        expect(b).to.be.instanceof(Int32Array)
-        expect(c).to.be.instanceof(Int32Array)
         expect(a).to.be.deep.equal(new Int32Array([1, 100, 3, 101, 5]))
         expect(b).to.be.deep.equal(new Int32Array([100, 20, -1, 101, 0, 10]))
         expect(c).to.be.deep.equal(new Int32Array([1, 2, 3, 4]))
@@ -219,9 +196,6 @@ describe("column_data_source module", () => {
           [[1, {stop:2, step:1}], [999, 999]],
           [[1, 5], [6]],
         ], [[5], [6], [4]])
-        expect(a).to.be.instanceof(Array)
-        expect(b).to.be.instanceof(Array)
-        expect(c).to.be.instanceof(Array)
         expect(a).to.be.deep.equal([1, 2, 100, 101, 5])
         expect(b).to.be.deep.equal([999, 999, -1, -2, 0, 6])
         expect(c).to.be.deep.equal([1, 2, 3, 4])
@@ -236,7 +210,6 @@ describe("column_data_source module", () => {
           [[1, {stop:2, step:1}], [999, 999]],
           [[1, 5], [6]],
         ], [[5], [6], [4]])
-        expect(s).to.be.instanceof(Set)
         expect(difference(s, new Set([0, 1]))).to.be.deep.equal(new Set())
       })
     })
@@ -244,21 +217,17 @@ describe("column_data_source module", () => {
     describe("with multi-index for 2d subarrays", () => {
 
       it("should patch Arrays to Arrays", () => {
-        const a = [1, 2, 3, 4, 5, 6]
-        const b = [10, 20, -1, -2, 0, 10]
-        const c = [1, 2]
-        patch_to_column([a, b, c], [[[0, {}, 2], [100, 101]]], [[2, 3], [3, 2], [1, 2]])
-        expect(a).to.be.instanceof(Array)
-        expect(b).to.be.instanceof(Array)
+        const a = ndarray([1, 2, 3, 4, 5, 6], {shape: [2, 3]})
+        const b = ndarray([10, 20, -1, -2, 0, 10], {shape: [3, 2]})
+        const c = ndarray([1, 2], {shape: [1, 2]})
+        patch_to_column([a, b, c], [[[0, {}, 2], [100, 101]]])
         expect(a).to.be.deep.equal([1, 2, 100, 4, 5, 101])
         expect(b).to.be.deep.equal([10, 20, -1, -2, 0, 10])
         expect(c).to.be.deep.equal([1, 2])
 
         patch_to_column([a, b, c], [
           [[1, {start:0, stop:2, step:1}, {start:0, stop:1, step:1}], [100, 101]],
-        ], [[2, 3], [3, 2], [1, 2]])
-        expect(a).to.be.instanceof(Array)
-        expect(b).to.be.instanceof(Array)
+        ])
         expect(a).to.be.deep.equal([1, 2, 100, 4, 5, 101])
         expect(b).to.be.deep.equal([100, 20, 101, -2, 0, 10])
         expect(c).to.be.deep.equal([1, 2])
@@ -275,9 +244,6 @@ describe("column_data_source module", () => {
           patch_to_column([a, b, c], [
             [[0, {}, 2], [100, 101]],
           ], [[2, 3], [3, 2], [1, 2]])
-          expect(a).to.be.instanceof(typ)
-          expect(b).to.be.instanceof(typ)
-          expect(c).to.be.instanceof(typ)
           expect(a).to.be.deep.equal(new typ([1, 2, 100, 4, 5, 101]))
           expect(b).to.be.deep.equal(new typ([10, 20, -1, -2, 0, 10]))
           expect(c).to.be.deep.equal(new typ([1, 2]))
@@ -285,9 +251,6 @@ describe("column_data_source module", () => {
           patch_to_column([a, b, c], [
             [[1, {start:0, stop:2, step:1}, {start:0, stop:1, step:1}], [100, 101]],
           ], [[2, 3], [3, 2], [1, 2]])
-          expect(a).to.be.instanceof(typ)
-          expect(b).to.be.instanceof(typ)
-          expect(c).to.be.instanceof(typ)
           expect(a).to.be.deep.equal(new typ([1, 2, 100, 4, 5, 101]))
           expect(b).to.be.deep.equal(new typ([100, 20, 101, -2, 0, 10]))
           expect(c).to.be.deep.equal(new typ([1, 2]))
@@ -301,9 +264,6 @@ describe("column_data_source module", () => {
         patch_to_column([a, b, c], [
           [[0, {step:1}, 2], [100, 101]],
         ], [[2, 3], [3, 2], [1, 2]])
-        expect(a).to.be.instanceof(Int32Array)
-        expect(b).to.be.instanceof(Int32Array)
-        expect(c).to.be.instanceof(Int32Array)
         expect(a).to.be.deep.equal(new Int32Array([1, 2, 100, 4, 5, 101]))
         expect(b).to.be.deep.equal(new Int32Array([10, 20, -1, -2, 0, 10]))
         expect(c).to.be.deep.equal(new Int32Array([1, 2]))
@@ -311,9 +271,6 @@ describe("column_data_source module", () => {
         patch_to_column([a, b, c], [
           [[1, {start:0, stop:3, step:2}, {start:0, stop:1, step:1}], [100, 101]],
         ], [[2, 3], [3, 2], [1, 2]])
-        expect(a).to.be.instanceof(Int32Array)
-        expect(b).to.be.instanceof(Int32Array)
-        expect(c).to.be.instanceof(Int32Array)
         expect(c).to.be.deep.equal(new Int32Array([1, 2]))
         expect(a).to.be.deep.equal(new Int32Array([1, 2, 100, 4, 5, 101]))
         expect(b).to.be.deep.equal(new Int32Array([100, 20, -1, -2, 101, 10]))
@@ -328,9 +285,6 @@ describe("column_data_source module", () => {
           [[0, {step:1}, 2], [100, 101]],
           [[1, {start:0, stop:2, step:1}, {start:0, stop:1, step:1}], [100, 101]],
         ], [[2, 3], [3, 2], [1, 2]])
-        expect(a).to.be.instanceof(Array)
-        expect(b).to.be.instanceof(Array)
-        expect(c).to.be.instanceof(Array)
         expect(a).to.be.deep.equal([1, 2, 100, 4, 5, 101])
         expect(b).to.be.deep.equal([100, 20, 101, -2, 0, 10])
         expect(c).to.be.deep.equal([1, 2])
@@ -344,7 +298,6 @@ describe("column_data_source module", () => {
           [[0, {step:1}, 2], [100, 101]],
           [[1, {start:0, stop:2, step:1}, {start:0, stop:1, step:1}], [100, 101]],
         ], [[2, 3], [3, 2], [1, 2]])
-        expect(s).to.be.instanceof(Set)
         expect(difference(s, new Set([0, 1]))).to.be.deep.equal(new Set())
       })
     })
@@ -355,26 +308,22 @@ describe("column_data_source module", () => {
     it("should stream Arrays to Arrays", () => {
       const a = [1, 2, 3, 4, 5]
       const r = stream_to_column(a, [100, 200])
-      expect(r).to.be.instanceof(Array)
       expect(r).to.be.deep.equal([1, 2, 3, 4, 5, 100, 200])
     })
 
     it("should stream Arrays to Arrays with rollover", () => {
       const a0 = [1, 2, 3, 4, 5]
       const r0 = stream_to_column(a0, [100, 200, 300], 5)
-      expect(r0).to.be.instanceof(Array)
       expect(r0).to.be.deep.equal([4, 5, 100, 200, 300])
 
       const a1 = [1, 2, 3, 4, 5]
       const r1 = stream_to_column(a1, [100, 200, 300], 6)
-      expect(r1).to.be.instanceof(Array)
       expect(r1).to.be.deep.equal([3, 4, 5, 100, 200, 300])
     })
 
     it("should stream Float32 to Float32", () => {
       const a = new Float32Array([1, 2, 3, 4, 5])
       const r = stream_to_column(a, [100, 200])
-      expect(r).to.be.instanceof(Float32Array)
       expect(r).to.be.deep.equal(new Float32Array([1, 2, 3, 4, 5, 100, 200]))
     })
 
@@ -382,26 +331,22 @@ describe("column_data_source module", () => {
       // test when col is already at rollover len
       const a0 = new Float32Array([1, 2, 3, 4, 5])
       const r0 = stream_to_column(a0, [100, 200, 300], 5)
-      expect(r0).to.be.instanceof(Float32Array)
       expect(r0).to.be.deep.equal(new Float32Array([4, 5, 100, 200, 300]))
 
       // test when col is not at rollover len but will exceed
       const a1 = new Float32Array([1, 2, 3, 4, 5])
       const r1 = stream_to_column(a1, [100, 200, 300], 6)
-      expect(r1).to.be.instanceof(Float32Array)
       expect(r1).to.be.deep.equal(new Float32Array([3, 4, 5, 100, 200, 300]))
 
       // test when col is not at rollover len and will not exceed
       const a2 = new Float32Array([1, 2, 3, 4, 5])
       const r2 = stream_to_column(a2, [100, 200, 300], 10)
-      expect(r2).to.be.instanceof(Float32Array)
       expect(r2).to.be.deep.equal(new Float32Array([1, 2, 3, 4, 5, 100, 200, 300]))
     })
 
     it("should stream Float64 to Float64", () => {
       const a = new Float64Array([1, 2, 3, 4, 5])
       const r = stream_to_column(a, [100, 200])
-      expect(r).to.be.instanceof(Float64Array)
       expect(r).to.be.deep.equal(new Float64Array([1, 2, 3, 4, 5, 100, 200]))
     })
 
@@ -409,26 +354,22 @@ describe("column_data_source module", () => {
       // test when col is already at rollover len
       const a0 = new Float64Array([1, 2, 3, 4, 5])
       const r0 = stream_to_column(a0, [100, 200, 300], 5)
-      expect(r0).to.be.instanceof(Float64Array)
       expect(r0).to.be.deep.equal(new Float64Array([4, 5, 100, 200, 300]))
 
       // test when col is not at rollover len but will exceed
       const a1 = new Float64Array([1, 2, 3, 4, 5])
       const r1 = stream_to_column(a1, [100, 200, 300], 6)
-      expect(r1).to.be.instanceof(Float64Array)
       expect(r1).to.be.deep.equal(new Float64Array([3, 4, 5, 100, 200, 300]))
 
       // test when col is not at rollover len and will not exceed
       const a2 = new Float64Array([1, 2, 3, 4, 5])
       const r2 = stream_to_column(a2, [100, 200, 300], 10)
-      expect(r2).to.be.instanceof(Float64Array)
       expect(r2).to.be.deep.equal(new Float64Array([1, 2, 3, 4, 5, 100, 200, 300]))
     })
 
     it("should stream Int32 to Int32", () => {
       const a = new Int32Array([1, 2, 3, 4, 5])
       const r = stream_to_column(a, [100, 200])
-      expect(r).to.be.instanceof(Int32Array)
       expect(r).to.be.deep.equal(new Int32Array([1, 2, 3, 4, 5, 100, 200]))
     })
 
@@ -436,19 +377,16 @@ describe("column_data_source module", () => {
       // test when col is already at rollover len
       const a0 = new Int32Array([1, 2, 3, 4, 5])
       const r0 = stream_to_column(a0, [100, 200, 300], 5)
-      expect(r0).to.be.instanceof(Int32Array)
       expect(r0).to.be.deep.equal(new Int32Array([4, 5, 100, 200, 300]))
 
       // test when col is not at rollover len but will exceed
       const a1 = new Int32Array([1, 2, 3, 4, 5])
       const r1 = stream_to_column(a1, [100, 200, 300], 6)
-      expect(r1).to.be.instanceof(Int32Array)
       expect(r1).to.be.deep.equal(new Int32Array([3, 4, 5, 100, 200, 300]))
 
       // test when col is not at rollover len and will not exceed
       const a2 = new Int32Array([1, 2, 3, 4, 5])
       const r2 = stream_to_column(a2, [100, 200, 300], 10)
-      expect(r2).to.be.instanceof(Int32Array)
       expect(r2).to.be.deep.equal(new Int32Array([1, 2, 3, 4, 5, 100, 200, 300]))
     })
   })
